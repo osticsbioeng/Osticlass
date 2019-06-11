@@ -24,8 +24,12 @@ class MainWindow(QtWidgets.QWidget):
         self.ui.setupUi(self)
         
         #### status変数 #####
-        self.name_ = "aa"
-        
+        self.optState = np.zeros(11)
+        self.boneState = np.zeros(5)
+        # 機械学習パラメーター
+        self.modelState = 0
+        self.parameterState = ""
+        self.crossValidState = 0
         
         #### Mainフレームのパーツ ####
         self.ui.pushButton_basicAnalysis.clicked.connect(self.confAnalysis)
@@ -34,57 +38,60 @@ class MainWindow(QtWidgets.QWidget):
         
         #### Optical tab #####
         ## groupBox_place
-        self.place = [0,0,0,0]
-        self.ui.comboBox_region.activated.connect(lambda:self.placeState(self.ui.comboBox_region.currentIndex(),0))
-        self.ui.comboBox_country.activated.connect(lambda:self.placeState(self.ui.comboBox_country.currentIndex(),1))
-        self.ui.comboBox_hospital.activated.connect(lambda:self.placeState(self.ui.comboBox_hospital.currentIndex(),2))
-        self.ui.comboBox_device.activated.connect(lambda:self.placeState(self.ui.comboBox_device.currentIndex(),3))
+        self.ui.comboBox_region.activated.connect(lambda:self.setOptState(self.ui.comboBox_region.currentIndex(),0))
+        self.ui.comboBox_country.activated.connect(lambda:self.setOptState(self.ui.comboBox_country.currentIndex(),1))
+        self.ui.comboBox_hospital.activated.connect(lambda:self.setOptState(self.ui.comboBox_hospital.currentIndex(),2))
+        self.ui.comboBox_device.activated.connect(lambda:self.setOptState(self.ui.comboBox_device.currentIndex(),3))
         
         
         ## groupBox_period
-        self.period = 0
-        self.ui.radioButton_periodAll.toggled.connect(lambda:self.periodState(0))
-        self.ui.radioButton_period1y.toggled.connect(lambda:self.periodState(365))
-        self.ui.radioButton_period05y.toggled.connect(lambda:self.periodState(183))
-        self.ui.radioButton_period1m.toggled.connect(lambda:self.periodState(30))
-        self.ui.radioButton_period1w.toggled.connect(lambda:self.periodState(7))
-        self.ui.radioButton_period1d.toggled.connect(lambda:self.periodState(1))
-        """""
+        self.ui.radioButton_periodAll.toggled.connect(lambda:self.setOptState(0,4))
+        self.ui.radioButton_period1y.toggled.connect(lambda:self.setOptState(365,4))
+        self.ui.radioButton_period05y.toggled.connect(lambda:self.setOptState(183,4))
+        self.ui.radioButton_period1m.toggled.connect(lambda:self.setOptState(30,4))
+        self.ui.radioButton_period1w.toggled.connect(lambda:self.setOptState(7,4))
+        self.ui.radioButton_period1d.toggled.connect(lambda:self.setOptState(1,4))
+        
+        
         ## groupBox_gender
-        self.ui.radioButton_genderAll.toggled.connect()
-        self.ui.radioButton_genderF.toggled.connect()
-        self.ui.radioButton_genderM.toggled.connect()
+        self.ui.radioButton_genderAll.toggled.connect(lambda:self.setOptState(0,5))
+        self.ui.radioButton_genderF.toggled.connect(lambda:self.setOptState(1,5))
+        self.ui.radioButton_genderM.toggled.connect(lambda:self.setOptState(2,5))
+        
         
         ## groupBox_age
-        self.ui.lineEdit_rangeAge1.textEdited.connect()
-        self.ui.lineEdit_rangeAge2.textEdited.connect()
+        self.ui.lineEdit_rangeAge1.textEdited.connect(lambda:self.setOptState(self.ui.lineEdit_rangeAge1.displayText(),6))
+        self.ui.lineEdit_rangeAge2.textEdited.connect(lambda:self.setOptState(self.ui.lineEdit_rangeAge2.displayText(),7))
+        
         
         ## groupBox_optdata
-        self.ui.radioButton_optDataUlna.toggled.connect()
-        self.ui.radioButton_optDataRadius.toggled.connect()
-        self.ui.checkBox_optDataPhantom.stateChanged.connect()
+        self.ui.radioButton_optDataUlna.toggled.connect(lambda:self.setOptState(0,8))
+        self.ui.radioButton_optDataRadius.toggled.connect(lambda:self.setOptState(1,8))
+        self.ui.checkBox_optDataPhantom.stateChanged.connect(lambda:self.setOptStateCheckBox(self.ui.checkBox_optDataPhantom,9))
+        
         
         ## groupBox_arm
-        self.ui.radioButton_armAll.toggled.connect()
-        self.ui.radioButton_armLeft.toggled.connect()
-        self.ui.radioButton_armRight.toggled.connect()
+        self.ui.radioButton_armAll.toggled.connect(lambda:self.setOptState(0,10))
+        self.ui.radioButton_armLeft.toggled.connect(lambda:self.setOptState(1,10))
+        self.ui.radioButton_armRight.toggled.connect(lambda:self.setOptState(2,10))
         
-        self.ui.pushButton_optset.clicked.connect(self.confLaerning)
+        #self.ui.pushButton_optset.clicked.connect(self.confLaerning)
         
         
         #### Bone tab #####
         ## groupBox_bone
-        self.ui.radioButton_boneUlna.toggled.connect()
-        self.ui.radioButton_boneRadius.toggled.connect()
-        self.ui.radioButton_boneFemur.toggled.connect()
-        self.ui.radioButton_boneLumbar.toggled.connect()
-        self.ui.comboBox_boneUlna.activated.connect()
-        self.ui.comboBox_boneRadius.activated.connect()
-        self.ui.comboBox_boneNeck.activated.connect()
-        self.ui.comboBox_boneLumbar.activated.connect()
+        self.ui.radioButton_boneUlna.toggled.connect(lambda:self.setBoneState(0,0))
+        self.ui.radioButton_boneRadius.toggled.connect(lambda:self.setBoneState(1,0))
+        self.ui.radioButton_boneFemur.toggled.connect(lambda:self.setBoneState(2,0))
+        self.ui.radioButton_boneLumbar.toggled.connect(lambda:self.setBoneState(3,0))
+        self.ui.comboBox_boneUlna.activated.connect(lambda:self.setBoneState(self.ui.comboBox_boneUlna.currentIndex(),1))
+        self.ui.comboBox_boneRadius.activated.connect(lambda:self.setBoneState(self.ui.comboBox_boneUlna.currentIndex(),2))
+        self.ui.comboBox_boneNeck.activated.connect(lambda:self.setBoneState(self.ui.comboBox_boneUlna.currentIndex(),3))
+        self.ui.comboBox_boneLumbar.activated.connect(lambda:self.setBoneState(self.ui.comboBox_boneUlna.currentIndex(),4))
         
-        self.ui.pushButton_boneSet.clicked.connect()
+        #self.ui.pushButton_boneSet.clicked.connect()
         
+        """""
         ## groupBox_other
         
         self.ui.checkBox_otherAge
@@ -108,33 +115,70 @@ class MainWindow(QtWidgets.QWidget):
         """""
         
         #### Machine laerning tab ####
-        self.ui.comboBox_machineModel
-        self.ui.textEdit_machinePara
+        self.ui.comboBox_machineModel.activated.connect(lambda:self.setMachineLearningModel(self.ui.comboBox_machineModel.currentIndex()))
+        #self.ui.textEdit_machinePara.textChanged.connect(lambda:self.setParameter(self.ui.textEdit_machinePara.displayText()))
         
-        self.ui.radioButton_crossLoo
-        self.ui.radioButton_cross5per
-        self.ui.radioButton_cross10per
-        self.ui.radioButton_cross20per
-        self.ui.radioButton_cross30per
+        self.ui.radioButton_crossLoo.toggled.connect(lambda:self.setCrossValid(0))
+        self.ui.radioButton_cross5per.toggled.connect(lambda:self.setCrossValid(5))
+        self.ui.radioButton_cross10per.toggled.connect(lambda:self.setCrossValid(10))
+        self.ui.radioButton_cross20per.toggled.connect(lambda:self.setCrossValid(20))
+        self.ui.radioButton_cross30per.toggled.connect(lambda:self.setCrossValid(30))
         
-        self.ui.pushButton_machineSet
+        #self.ui.pushButton_machineSet
+        
         
         
     def confLaerning(self):
-        print("Start !!!!")
-        print(self.place)
-        print(self.period)
+        self.w = QtWidgets.QWidget()
+        self.w.setWindowTitle('Confirmation')
+        # label
+        col0_layout1 = QtWidgets.QVBoxLayout()
+        col0_layout1.addWidget(QtWidgets.QLabel("Place: %s"%self.optState))
+        
+        self.groupBox_conf0 = QtWidgets.QGroupBox("Optical data")
+        #box0 = QtWidgets.QHBoxLayout()
+        #box0.addLayout(col0_layout1)
+        #box0.addLayout(col0_layout2)
+        self.groupBox_conf0.setLayout(col0_layout1)
+        
+        self.groupBox_conf2 = QtWidgets.QGroupBox("Machine learning model")
+        col0_layout2 = QtWidgets.QVBoxLayout()
+        col0_layout2.addWidget(QtWidgets.QLabel("parameter: %s"%self.parameterState))
+        self.groupBox_conf0.setLayout(col0_layout2)
+
+        # layout の定義
+        grid = QtWidgets.QVBoxLayout()
+        grid.addWidget(self.groupBox_conf0)
+        self.w.resize( 200, 250)
+        self.w.setLayout(grid)
+        self.w.show()
         
     def confAnalysis(self):
         print("Analysis !!!!")
         
-    def placeState(self,state,n):
-        self.place[n] = state
-        print(self.place)
+    def setOptState(self,state,n):
+        self.optState[n] = state
+        print(self.optState)
         
-    def periodState(self,n):
-        self.period = n
-
+    def setOptStateCheckBox(self,state,n):
+        if state.isChecked() == True:
+            self.optState[n] = 1
+        else:
+            self.optState[n] = 0
+    
+    def setBoneState(self,state,n):
+        self.boneState[n] = state
+        print(self.boneState)
+        
+    def setMachineLearningModel(self,state):
+        self.modelState = state
+        
+    def setCrossValid(self,state):
+        self.crossValidState = state
+    
+    def setParameter(self,state):
+        self.parameterState = state
+            
         
     # ノイズ除去
     def noiseCancel(self, y):
