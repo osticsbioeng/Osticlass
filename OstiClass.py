@@ -25,7 +25,8 @@ class MainWindow(QtWidgets.QWidget):
         
         #### status変数 #####
         self.optState = np.zeros(11)
-        self.boneState = np.zeros(5)
+        self.boneState = ["Ulna","UD","UD","Neck","L1"]
+        self.bone_df = pa.DataFrame()
         # 機械学習パラメーター
         self.modelState = 0
         self.parameterState = ""
@@ -80,14 +81,14 @@ class MainWindow(QtWidgets.QWidget):
         
         #### Bone tab #####
         ## groupBox_bone
-        self.ui.radioButton_boneUlna.toggled.connect(lambda:self.setBoneState(0,0))
-        self.ui.radioButton_boneRadius.toggled.connect(lambda:self.setBoneState(1,0))
-        self.ui.radioButton_boneFemur.toggled.connect(lambda:self.setBoneState(2,0))
-        self.ui.radioButton_boneLumbar.toggled.connect(lambda:self.setBoneState(3,0))
-        self.ui.comboBox_boneUlna.activated.connect(lambda:self.setBoneState(self.ui.comboBox_boneUlna.currentIndex(),1))
-        self.ui.comboBox_boneRadius.activated.connect(lambda:self.setBoneState(self.ui.comboBox_boneUlna.currentIndex(),2))
-        self.ui.comboBox_boneNeck.activated.connect(lambda:self.setBoneState(self.ui.comboBox_boneUlna.currentIndex(),3))
-        self.ui.comboBox_boneLumbar.activated.connect(lambda:self.setBoneState(self.ui.comboBox_boneUlna.currentIndex(),4))
+        self.ui.radioButton_boneUlna.toggled.connect(lambda:self.setBoneState("Ulna",0))
+        self.ui.radioButton_boneRadius.toggled.connect(lambda:self.setBoneState("Radius",0))
+        self.ui.radioButton_boneFemur.toggled.connect(lambda:self.setBoneState("Femur",0))
+        self.ui.radioButton_boneLumbar.toggled.connect(lambda:self.setBoneState("Lumbar",0))
+        self.ui.comboBox_boneUlna.activated.connect(lambda:self.setBoneState(self.ui.comboBox_boneUlna.currentText(),1))
+        self.ui.comboBox_boneRadius.activated.connect(lambda:self.setBoneState(self.ui.comboBox_boneRadius.currentText(),2))
+        self.ui.comboBox_boneNeck.activated.connect(lambda:self.setBoneState(self.ui.comboBox_boneNeck.currentText(),3))
+        self.ui.comboBox_boneLumbar.activated.connect(lambda:self.setBoneState(self.ui.comboBox_boneLumbar.currentText(),4))
         
         #self.ui.pushButton_boneSet.clicked.connect()
         
@@ -126,9 +127,36 @@ class MainWindow(QtWidgets.QWidget):
         
         #self.ui.pushButton_machineSet
         
+    def getDatabase(self):
+        data_df = pa.read_excel("database.xlsx")
+        return data_df
+    
+    def getIndexName(self):
+        index_df = pa.read_excel("index_list.xlsx")
+        return index_df
+    
+    def setBoneData(self):
+        data_df = self.getDatabase()
+        index_df = self.getIndexName()
+        self.bone_df =  pa.DataFrame()
         
-        
+        if self.boneState[0]=="Ulna":
+            index_df = index_df[index_df['Index Name'].str.contains(self.boneState[0])]
+            index_df = index_df[index_df['Index Name'].str.contains(self.boneState[1])]            
+        elif self.boneState[0]=="Radius":
+            index_df = index_df[index_df['Index Name'].str.contains(self.boneState[0])]
+            index_df = index_df[index_df['Index Name'].str.contains(self.boneState[2])]            
+        elif self.boneState[0]=="Femur":
+            index_df = index_df[index_df['Index Name'].str.contains(self.boneState[3])]
+        elif self.boneState[0]=="Lumbar":
+            index_df = index_df[index_df['Index Name'].str.contains(self.boneState[4])]
+            
+        bone_name = index_df.ix[index_df.index[0]]
+        self.bone_df[bone_name] = data_df[bone_name]
+        print(self.bone_df)
+            
     def confLaerning(self):
+        self.setBoneData()
         self.w = QtWidgets.QWidget()
         self.w.setWindowTitle('Confirmation')
         # label
@@ -141,14 +169,34 @@ class MainWindow(QtWidgets.QWidget):
         #box0.addLayout(col0_layout2)
         self.groupBox_conf0.setLayout(col0_layout1)
         
+            
+        self.groupBox_conf1 = QtWidgets.QGroupBox("Bone infomation")
+        col1_layout1 = QtWidgets.QVBoxLayout()
+        if self.boneState[0]==0:
+            col1_layout1.addWidget(QtWidgets.QLabel("Place: %s"%self.optState))
+            col1_layout1.addWidget(QtWidgets.QLabel("Place: %s"%self.optState))
+        elif self.boneState[0]==1:
+            col1_layout1.addWidget(QtWidgets.QLabel("Place: %s"%self.optState))
+            col1_layout1.addWidget(QtWidgets.QLabel("Place: %s"%self.optState))
+        elif self.boneState[0]==2:
+            col1_layout1.addWidget(QtWidgets.QLabel("Place: %s"%self.optState))
+            col1_layout1.addWidget(QtWidgets.QLabel("Place: %s"%self.optState))
+        elif self.boneState[0]==3:
+            col1_layout1.addWidget(QtWidgets.QLabel("Place: %s"%self.optState))
+            col1_layout1.addWidget(QtWidgets.QLabel("Place: %s"%self.optState))
+            
+        self.groupBox_conf1.setLayout(col1_layout1)
+        
+        
         self.groupBox_conf2 = QtWidgets.QGroupBox("Machine learning model")
         col0_layout2 = QtWidgets.QVBoxLayout()
         col0_layout2.addWidget(QtWidgets.QLabel("parameter: %s"%self.parameterState))
-        self.groupBox_conf0.setLayout(col0_layout2)
+        self.groupBox_conf2.setLayout(col0_layout2)
 
         # layout の定義
         grid = QtWidgets.QVBoxLayout()
         grid.addWidget(self.groupBox_conf0)
+        grid.addWidget(self.groupBox_conf2)
         self.w.resize( 200, 250)
         self.w.setLayout(grid)
         self.w.show()
